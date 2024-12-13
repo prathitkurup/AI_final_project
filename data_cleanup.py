@@ -1,24 +1,23 @@
 import pandas as pd
 
-def filter_res_units(housing):
+def filter_records(housing):
     '''
-    Filter records with residential units 1 
+    Filter data so records with NA values of specific values are removed 
     '''
-    filtered_housing = housing[housing['RESIDENTIAL UNITS'] == 1]
-    # num_rows2 = filtered_housing.shape[0]
-    # print(f"Number of rows (AFTER): {num_rows2}")
-    return filtered_housing
+    df = pd.read_csv(housing) 
+
+    # List of columns to check for NA values
+    columns_to_check = ['bathrooms', 'bedrooms', 'floorAreaSqM', 'livingRooms', 'history_price']
+
+    # Drop rows with NA in any of the specified columns 
+    cleaned_df = df.dropna(subset=columns_to_check)
+
+    # save cleaned dataset to our folder 
+    cleaned_df.to_csv('cleaned_london_house_price_data.csv', index=False)
+    
 
 if __name__ == "__main__":
 
-    xlsx_file = 'rollingsales_manhattan.xlsx'  
-
-    housing = pd.read_excel(xlsx_file, header=4)  
-    housing.to_csv('rollingsales_manhattan.csv', index=False)
-    housing.columns = housing.columns.str.strip()
-
-    # num_rows1 = housing.shape[0]
-    # print(f"Number of rows (BEFORE): {num_rows1}")
-
-    filter_res_units(housing)
+    housing_file = 'london_house_price_data.csv' 
+    filter_records(housing_file)
     
