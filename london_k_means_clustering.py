@@ -6,6 +6,7 @@ import matplotlib.cm as cm
 from sklearn.cluster import KMeans
 import geopandas as gpd
 from shapely.geometry import Point
+import folium
 
 
 def run_k_means(df, features, k):
@@ -15,7 +16,10 @@ def run_k_means(df, features, k):
     kmeans = KMeans(n_clusters=k, random_state=42)
     kmeans.fit(X)
     df['cluster'] = kmeans.predict(X)
-    
+
+    for i in range(k):
+        print(f"Cluster {i}: {df.loc[df['cluster'] == i].shape}")
+
     # Step 2: Sort clusters by their centroid values
     centroids = kmeans.cluster_centers_.flatten()  
     sorted_indices = np.argsort(-centroids)  
@@ -32,7 +36,6 @@ def run_k_means(df, features, k):
     # Step 5: Visualize clusters over map
     plt.figure(figsize=(10, 8))
     plt.scatter(df['longitude'], df['latitude'], c=df['color'], s=10, alpha=0.6, label='Cluster Points')
-    # plt.scatter(kmeans.cluster_centers_[:, 1], kmeans.cluster_centers_[:, 0], s=100, c='black', marker='^', label='Centers')
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
     plt.title(f'K-Means Clustering of House Prices in London (k={k})')
@@ -47,7 +50,7 @@ if __name__ == "__main__":
     df = pd.read_csv('cleaned_london_house_price_data.csv')
     
     # Limit data for faster computation
-    df = df.iloc[:10000]
+    df = df.iloc[:1000]
     
     # Calculate price per square meter and drop unnecessary columns
     df['price_per_sqm'] = df['history_price'] / df['floorAreaSqM']
@@ -57,4 +60,4 @@ if __name__ == "__main__":
     df = df.dropna(subset=features)
     
     # Run K-means clustering and visualize the results on a map
-    clustered_df = run_k_means(df, features, 4)
+    clustered_df = run_k_means(df, features, 8)
