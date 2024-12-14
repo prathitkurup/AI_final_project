@@ -4,58 +4,57 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from sklearn.cluster import KMeans
+import geopandas as gpd
+from shapely.geometry import Point
 
-def run_k_means(df, features, k_max):
+
+def run_k_means(df, features, k):
     X = df[features]
-    # y = df['price_per_sqm']
-
-    # Step 1: Find optimum number of clusters
-    sse = [] # sum squared error
-    for k in range(1,30):
-        km = KMeans(n_clusters=k, random_state=42)
-        km.fit(X)
-        sse.append(km.inertia_)
-
-    # Visualize elbow method
-    sns.set_style("whitegrid")
-    g=sns.lineplot(x=range(1,30), y=sse)
-    g.set(xlabel ="Number of cluster (k)", 
-        ylabel = "Sum Squared Error", 
-        title ='Elbow Method')
+    
+    # Step 1: Implement K-Means Clustering
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X)
+    df['cluster'] = kmeans.predict(X)
+    
+    # Step 2: Sort clusters by their centroid values
+    centroids = kmeans.cluster_centers_.flatten()  
+    sorted_indices = np.argsort(-centroids)  
+    
+    # Step 3: Create a mapping from cluster index to rank
+    cluster_rank = {cluster: rank for rank, cluster in enumerate(sorted_indices)}
+    df['rank'] = df['cluster'].map(cluster_rank)  # Assign rank to each cluster
+    
+    # Step 4: Assign colors based on rank (darker for higher centroids)
+    cmap = plt.get_cmap('viridis', k)  
+    colors = [cmap(i / (k - 1)) for i in range(k)]  
+    df['color'] = df['rank'].map(lambda x: colors[x])
+    
+    # Step 5: Visualize clusters over map
+    plt.figure(figsize=(10, 8))
+    plt.scatter(df['longitude'], df['latitude'], c=df['color'], s=10, alpha=0.6, label='Cluster Points')
+    # plt.scatter(kmeans.cluster_centers_[:, 1], kmeans.cluster_centers_[:, 0], s=100, c='black', marker='^', label='Centers')
+    plt.xlabel("Longitude")
+    plt.ylabel("Latitude")
+    plt.title(f'K-Means Clustering of House Prices in London (k={k})')
+    plt.legend()
     plt.show()
-
-    # Based on the elbow method, we can see that the optimal number of clusters is 6
-
-
-    # Step 2: Implementing K-Means Clustering
-    # TODO: what is random state
-    # kmeans = KMeans(n_clusters = 6, random_state = 42)
-    # kmeans.fit(X)
-    # print(kmeans.cluster_centers_)
-    # pred = kmeans.fit_predict(X)
-    # print(pred)
-
-    # # plt.figure(figsize=(12,5))
-    # # plt.subplot(1,2,1)
-    # plt.scatter(X[:,0],X[:,1],c = pred, cmap=cm.Accent)
-    # plt.grid(True)
-    # for center in kmeans.cluster_centers_:
-    #     center = center[:2]
-    #     plt.scatter(center[0],center[1],marker = '^',c = 'red')
-    # plt.xlabel("longitude")
-    # plt.ylabel("latitude")
-    # plt.show()
-
+    
+    return df
 
 
 if __name__ == "__main__":
+    # Load the cleaned London house price data
     df = pd.read_csv('cleaned_london_house_price_data.csv')
-    print(df)
-    df = df.iloc[:10000]
-    df['price_per_sqm'] = df['history_price'] / df['floorAreaSqM']
-    features = ['latitude', 'longitude', 'price_per_sqm']
-
     
-    # Drop unnecessary columns here
-
-    run_k_means(df, features, 15)
+    # Limit data for faster computation
+    df = df.iloc[:10000]
+    
+    # Calculate price per square meter and drop unnecessary columns
+    df['price_per_sqm'] = df['history_price'] / df['floorAreaSqM']
+    features = ['price_per_sqm']
+    
+    # Drop any rows with NaN values in the relevant columns
+    df = df.dropna(subset=features)
+    
+    # Run K-means clustering and visualize the results on a map
+    clustered_df = run_k_means(df, features, 4)
