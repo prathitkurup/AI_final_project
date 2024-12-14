@@ -2,12 +2,9 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from sklearn.cluster import KMeans
-import geopandas as gpd
-from shapely.geometry import Point
 import folium
-
+from branca.colormap import LinearColormap 
+from sklearn.cluster import KMeans
 
 def run_k_means(df, features, k):
     X = df[features]
@@ -17,54 +14,46 @@ def run_k_means(df, features, k):
     kmeans.fit(X)
     df['cluster'] = kmeans.predict(X)
 
-    for i in range(k):
-        print(f"Cluster {i}: {df.loc[df['cluster'] == i].shape}")
-
     # Step 2: Sort clusters by their centroid values
     centroids = kmeans.cluster_centers_.flatten()  
     sorted_indices = np.argsort(-centroids)  
     
     # Step 3: Create a mapping from cluster index to rank
     cluster_rank = {cluster: rank for rank, cluster in enumerate(sorted_indices)}
-    df['rank'] = df['cluster'].map(cluster_rank)  # Assign rank to each cluster
+    df['rank'] = df['cluster'].map(cluster_rank)  
     
-    # Step 4: Assign colors based on rank (darker for higher centroids)
-    cmap = plt.get_cmap('viridis', k)  
-    colors = [cmap(i / (k - 1)) for i in range(k)]  
-    df['color'] = df['rank'].map(lambda x: colors[x])
-    
-    # Step 5: Visualize clusters over map
-    plt.figure(figsize=(10, 8))
-    plt.scatter(df['longitude'], df['latitude'], c=df['color'], s=10, alpha=0.6, label='Cluster Points')
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-    plt.title(f'K-Means Clustering of House Prices in London (k={k})')
-    plt.legend()
-    plt.show()
+    # Step 4: Assign colors using Viridis colormap
+    viridis = LinearColormap(['#440154', '#3B528B', '#21908C', '#5DC863', '#FDE725'], vmin=0, vmax=k-1)
+    df['color'] = df['rank'].map(lambda x: viridis(x))
 
-    # Create a folium map
-    m = folium.Map(location=[51.5014,-0.140634],zoom_start=10)
+
+    # Step 5: Create a folium map
+    m = folium.Map(location=[51.5014, -0.140634], zoom_start=10)
     for i in range(k):
         cluster_df = df.loc[df['cluster'] == i]
         for idx, row in cluster_df.iterrows():
             folium.CircleMarker(
                 location=[row['latitude'], row['longitude']],
                 radius=5,
-                color=df.color[i],
+                color=row['color'],  # Outline color
                 fill=True,
-                fill_color=colors[i]
+                fill_color=row['color'],  # Fill color
+                fill_opacity=0.3,  # Set fill opacity (30% transparent)
+                opacity=0.3  # Set outline opacity (30% transparent)
             ).add_to(m)
+
+    # Step 6: Save map (need to manually open)
     m.save('map.html')
     
     return df
 
-
 if __name__ == "__main__":
+
     # Load the cleaned London house price data
     df = pd.read_csv('cleaned_london_house_price_data.csv')
     
     # Limit data for faster computation
-    df = df.iloc[:1000]
+    # df = df.iloc[:100]
     
     # Calculate price per square meter and drop unnecessary columns
     df['price_per_sqm'] = df['history_price'] / df['floorAreaSqM']
