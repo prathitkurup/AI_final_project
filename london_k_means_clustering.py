@@ -44,11 +44,16 @@ def run_k_means(df, features, k):
 
     # Create a folium map
     m = folium.Map(location=[51.5014,-0.140634],zoom_start=10)
-    folium.Circle(
-        radius=5000,
-        location=[51.5014,-0.140634],
-        color='crimson',
-        fill=False,).add_to(m)
+    for i in range(k):
+        cluster_df = df.loc[df['cluster'] == i]
+        for idx, row in cluster_df.iterrows():
+            folium.CircleMarker(
+                location=[row['latitude'], row['longitude']],
+                radius=5,
+                color=df.color[i],
+                fill=True,
+                fill_color=colors[i]
+            ).add_to(m)
     m.save('map.html')
     
     return df
