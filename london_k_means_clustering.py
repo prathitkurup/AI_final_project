@@ -6,27 +6,28 @@ import folium
 from branca.colormap import LinearColormap 
 from sklearn.cluster import KMeans
 
-def visualize_plot(df, k):
+def visualize_plot(df, k, centroids):
 
     #for i in range(k):
     #    print(f"Cluster {i}: {df.loc[df['cluster'] == i].shape}")
     
     # Step 5: Visualize clusters over map
     plt.figure(figsize=(10, 8))
+    cmap = plt.cm.get_cmap('viridis', k)
     plt.scatter(df['longitude'],
                  df['latitude'],
                  c=df['rank'],
-                 cmap='viridis',
+                 cmap= cmap,
                  s=10, 
                  alpha=0.6, 
                  label='Cluster Points')
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
     plt.title(f'K-Means Clustering of House Prices in London (k={k})')
-    plt.legend()
+    plt.colorbar(ticks = centroids)
     plt.show()
 
-def visualize_map(df, k):
+def visualize_map(df, k, centroids):
 
     # Step 5: Create a folium map
     m = folium.Map(location=[51.5014, -0.140634], zoom_start=10)
@@ -69,7 +70,7 @@ def run_k_means(df, features, k):
     viridis = LinearColormap(['#440154', '#3B528B', '#21908C', '#5DC863', '#FDE725'], vmin=0, vmax=k-1)
     df['color_map'] = df['rank'].map(lambda x: viridis(x))
 
-    return df
+    return centroids
 
 if __name__ == "__main__":
 
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     df = df.dropna(subset=features)
     
     # Run K-means clustering and visualize the results on a map
-    clustered_df = run_k_means(df, features, 8)
-
-    visualize_map(clustered_df, 8)
-    visualize_plot(clustered_df, 8)
+    centroids = run_k_means(df, features, 8)
+    centroids = centroids.sort()
+    #visualize_map(df, 8, centroids)
+    visualize_plot(df, 8, centroids)
