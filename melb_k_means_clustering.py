@@ -35,11 +35,11 @@ def visualize_plot(df, k, centroids):
     cbar.set_ticks(range(k))  
     # Set labels to centroid values
     cbar.set_ticklabels([f"{centroid:.2f}" for centroid in centroids])  
-    cbar.set_label("Mean Price per Square Meter")
+    cbar.set_label("Mean Price per Bedroom")
 
     plt.xlabel("Longtitude")
     plt.ylabel("Lattitude")
-    plt.title(f'K-Means Clustering of House Prices in London (k={k})')
+    plt.title(f'K-Means Clustering of House Prices in Melbourne (k={k})')
     plt.legend()
     plt.show()
 
