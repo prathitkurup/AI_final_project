@@ -1,53 +1,75 @@
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 import folium
-from branca.colormap import LinearColormap 
+from branca.colormap import LinearColormap
 from sklearn.cluster import KMeans
 
 def visualize_plot(df, k, centroids):
-
-    #for i in range(k):
-    #    print(f"Cluster {i}: {df.loc[df['cluster'] == i].shape}")
+    """
+    Visualize the K-means clustering results using a scatter plot.
+    Colorbar is labeled with the centroid values.
+    """
+    if centroids is None:
+        return
     
-    # Step 5: Visualize clusters over map
     plt.figure(figsize=(10, 8))
-    cmap = plt.cm.get_cmap('viridis', k)
-    plt.scatter(df['longitude'],
-                 df['latitude'],
-                 c=df['rank'],
-                 cmap= cmap,
-                 s=10, 
-                 alpha=0.6, 
-                 label='Cluster Points')
+    
+    # Use the viridis colormap
+    cmap = plt.cm.viridis
+    
+    # Scatter plot with cluster ranks
+    plt.scatter(
+        df['longitude'],
+        df['latitude'],
+        c=df['rank'], 
+        cmap=cmap, 
+        s=10, 
+        alpha=0.6, 
+        label='Cluster Points'
+    )
+    
+    # Custom colorbar with sorted centroid labels
+    cbar = plt.colorbar()
+    # Define the tick positions
+    cbar.set_ticks(range(k))  
+    # Set labels to centroid values
+    cbar.set_ticklabels([f"{centroid:.2f}" for centroid in centroids])  
+    cbar.set_label("Mean Price per Square Meter")
+
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
     plt.title(f'K-Means Clustering of House Prices in London (k={k})')
-    plt.colorbar(ticks = centroids)
+    plt.legend()
     plt.show()
 
-def visualize_map(df, k, centroids):
 
-    # Step 5: Create a folium map
+def visualize_map(df, k, centroids):
+    """
+    Visualize the clustering results using an interactive folium map.
+    """
     m = folium.Map(location=[51.5014, -0.140634], zoom_start=10)
+    
     for i in range(k):
         cluster_df = df.loc[df['cluster'] == i]
-        for idx, row in cluster_df.iterrows():
+        for _, row in cluster_df.iterrows():
             folium.CircleMarker(
                 location=[row['latitude'], row['longitude']],
                 radius=5,
-                color=row['color_map'],  # Outline color
+                color=row['color_map'],  
                 fill=True,
-                fill_color=row['color_map'],  # Fill color
-                fill_opacity=0.3,  # Set fill opacity (30% transparent)
-                opacity=0.3  # Set outline opacity (30% transparent)
+                fill_color=row['color_map'],  
+                fill_opacity=0.3,
+                opacity=0.3
             ).add_to(m)
 
-    # Step 6: Save map (need to manually open)
     m.save('map.html')
 
+
 def run_k_means(df, features, k):
+    """
+    Run K-means clustering on the selected features and rank clusters by their centroid values.
+    """
     X = df[features]
     
     # Step 1: Implement K-Means Clustering
@@ -55,30 +77,25 @@ def run_k_means(df, features, k):
     kmeans.fit(X)
     df['cluster'] = kmeans.predict(X)
 
-    # Step 2: Sort clusters by their centroid values
-    centroids = kmeans.cluster_centers_.flatten()  
-    sorted_indices = np.argsort(-centroids)  
-    
-    # Step 3: Create a mapping from cluster index to rank
+    # Step 2: Calculate centroids and sort descending
+    centroids = kmeans.cluster_centers_.flatten()
+    sorted_centroids = np.sort(centroids)[::-1]  
+
+    # Step 3: Map clusters to ranks
+    sorted_indices = np.argsort(-centroids) 
     cluster_rank = {cluster: rank for rank, cluster in enumerate(sorted_indices)}
-    df['rank'] = df['cluster'].map(cluster_rank)  
+    df['rank'] = df['cluster'].map(cluster_rank)
 
-    cmap = plt.get_cmap('viridis', k)  # Get a colormap with k colors
-    colors = [cmap(i) for i in range(k)]  # Extract k colors from the colormap
-    df['color_plot'] = df['cluster'].apply(lambda x: colors[x])
-
+    # Step 4: Assign colors to clusters
     viridis = LinearColormap(['#440154', '#3B528B', '#21908C', '#5DC863', '#FDE725'], vmin=0, vmax=k-1)
     df['color_map'] = df['rank'].map(lambda x: viridis(x))
 
-    return centroids
+    return sorted_centroids
+
 
 if __name__ == "__main__":
-
     # Load the cleaned London house price data
     df = pd.read_csv('cleaned_london_house_price_data.csv')
-    
-    # Limit data for faster computation
-    # df = df.iloc[:1000]
     
     # Calculate price per square meter and drop unnecessary columns
     df['price_per_sqm'] = df['history_price'] / df['floorAreaSqM']
@@ -87,8 +104,8 @@ if __name__ == "__main__":
     # Drop any rows with NaN values in the relevant columns
     df = df.dropna(subset=features)
     
-    # Run K-means clustering and visualize the results on a map
-    centroids = run_k_means(df, features, 8)
-    centroids = centroids.sort()
-    #visualize_map(df, 8, centroids)
-    visualize_plot(df, 8, centroids)
+    # Run K-means clustering and visualize the results
+    k = 8  
+    centroids = run_k_means(df, features, k)
+    visualize_plot(df, k, centroids)
+    visualize_map(df, k, centroids)
