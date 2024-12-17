@@ -152,12 +152,14 @@ if __name__ == "__main__":
     # Drop any rows with NaN values in the relevant columns
     df = df.dropna(subset=features)
     
+    k=8
+    
     # Run K-means clustering and visualize the results on a map
-    cluster_to_centroid, sorted_centroids = run_k_means(df, features, 8)
-
-    visualize_map(df, 8, sorted_centroids)
-    visualize_plot(df, 8, sorted_centroids)
+    cluster_to_centroid, sorted_centroids = run_k_means(df, features, k)
 
     predictions = predict_house_price(test_df,df,features,cluster_to_centroid)
     print("Predictions: ")
     print(predictions)
+
+    visualize_map(df, k, sorted_centroids)
+    visualize_plot(df, k, sorted_centroids)
