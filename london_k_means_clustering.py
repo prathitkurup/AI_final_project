@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import folium
+from matplotlib.colors import ListedColormap
 from branca.colormap import LinearColormap 
 from sklearn.cluster import KMeans
 
@@ -17,7 +18,7 @@ def visualize_plot(df, k, centroids):
     plt.figure(figsize=(10, 8))
     
     # Use the viridis colormap
-    cmap = plt.cm.viridis
+    cmap = ListedColormap(plt.cm.magma(np.linspace(0, 1, k)))
     
     # Scatter plot with cluster ranks
     plt.scatter(
