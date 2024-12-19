@@ -18,7 +18,7 @@ def visualize_plot(df, k, centroids):
     plt.figure(figsize=(10, 8))
     
     # Use the viridis colormap
-    cmap = ListedColormap(plt.cm.magma(np.linspace(0, 1, k)))
+    cmap = ListedColormap(plt.cm.viridis(np.linspace(0, 1, k)))
     
     # Scatter plot with cluster ranks
     plt.scatter(
@@ -142,8 +142,8 @@ if __name__ == "__main__":
     df = pd.read_csv('cleaned_london_house_price_data.csv')
     
     # Get a testing set for the house predictions
-    test_df = df.iloc[:10]
-    df = df.iloc[10:]
+    # test_df = df.iloc[:10]
+    # df = df.iloc[10:]
     
     # Calculate price per square meter and drop unnecessary columns
     df['price_per_sqm'] = df['history_price'] / df['floorAreaSqM']
@@ -158,9 +158,9 @@ if __name__ == "__main__":
     # Run K-means clustering and visualize the results on a map
     cluster_to_centroid, sorted_centroids = run_k_means(df, features, k)
 
-    predictions = predict_house_price(test_df,df,features,cluster_to_centroid)
-    print("Predictions: ")
-    print(predictions)
+    # predictions = predict_house_price(test_df,df,features,cluster_to_centroid)
+    # print("Predictions: ")
+    # print(predictions)
 
     visualize_map(df, k, sorted_centroids)
     visualize_plot(df, k, sorted_centroids)
