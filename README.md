@@ -30,6 +30,13 @@ folium: For rendering interactive maps.
 
 branca: For creating colormaps used in map visualizations.
 
+# How to Run?
+
+Run the london_k_means_clustering.py for the London cluster plot and map. 
+Run the mlb_k_means_clustering.py for Melbourne cluster plot and map. 
+
+You can alter k in both the scripts in the main function!
+
 # Contact:
 
 Shibali Mishra: smishra@bowdoin.edu
